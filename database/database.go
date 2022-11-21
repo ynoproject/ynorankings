@@ -181,7 +181,7 @@ func WriteRankingSubCategory(categoryId string, subCategoryId string, game strin
 }
 
 func GetRankingEntryPage(playerUuid string, categoryId string, subCategoryId string) (page int, err error) {
-	err = Conn.QueryRow("SELECT FLOOR(r.rowNum / 25) + 1 FROM (SELECT r.uuid, ROW_NUMBER() OVER (ORDER BY r.position) rowNum FROM rankingEntries r WHERE r.categoryId = ? AND r.subCategoryId = ?) r WHERE r.uuid = ?", categoryId, subCategoryId, playerUuid).Scan(&page)
+	err = Conn.QueryRow("SELECT FLOOR(r.rowNum / 25) + 1 FROM (SELECT r.uuid, ROW_NUMBER() OVER (ORDER BY r.position) rowNum FROM rankingEntries r WHERE r.categoryId = ? AND r.subCategoryId = ? AND r.actualPosition <= 1000) r WHERE r.uuid = ?", categoryId, subCategoryId, playerUuid).Scan(&page)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 1, nil
@@ -306,7 +306,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 		query = "SELECT ?, ?, RANK() OVER (ORDER BY MAX(ms.score) DESC), 0, ms.uuid, MAX(ms.score), (SELECT MAX(ams.timestampCompleted) FROM playerMinigameScores ams WHERE ams.uuid = ms.uuid AND ams.minigameId = ms.minigameId AND ams.score = ms.score) FROM playerMinigameScores ms WHERE ms.minigameId = ? GROUP BY ms.uuid"
 	}
 
-	query += " ORDER BY 5 DESC, 6 LIMIT 1000"
+	query += " ORDER BY 5 DESC, 6"
 
 	var results *sql.Rows
 	if isFiltered {
@@ -344,6 +344,10 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 			entryValues = append(entryValues, entry.ValueInt)
 		}
 		entryValues = append(entryValues, entry.Timestamp)
+
+		if rowIndex == 1000 {
+			break
+		}
 
 		rowIndex++
 	}
