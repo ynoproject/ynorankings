@@ -301,7 +301,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 		}
 		query += "WHERE ec.type = 2 GROUP BY ec.uuid"
 	case "timeTrial":
-		query = "SELECT ?, ?, RANK() OVER (ORDER BY MIN(tt.seconds)), 0, tt.uuid, MIN(tt.seconds), (SELECT MAX(att.timestampCompleted) FROM playerTimeTrials att WHERE att.uuid = tt.uuid AND att.mapId = tt.mapId AND att.seconds = tt.seconds) FROM playerTimeTrials tt WHERE tt.mapId = ? GROUP BY tt.uuid ORDER BY 5, 6"
+		query = "SELECT ?, ?, RANK() OVER (ORDER BY MIN(tt.seconds)), 0, tt.uuid, MIN(tt.seconds), (SELECT MAX(att.timestampCompleted) FROM playerTimeTrials att WHERE att.uuid = tt.uuid AND att.mapId = tt.mapId AND att.seconds = tt.seconds) FROM playerTimeTrials tt WHERE tt.mapId = ? GROUP BY tt.uuid"
 	case "minigame":
 		query = "SELECT ?, ?, RANK() OVER (ORDER BY MAX(ms.score) DESC), 0, ms.uuid, MAX(ms.score), (SELECT MAX(ams.timestampCompleted) FROM playerMinigameScores ams WHERE ams.uuid = ms.uuid AND ams.minigameId = ms.minigameId AND ams.score = ms.score) FROM playerMinigameScores ms WHERE ms.minigameId = ? GROUP BY ms.uuid"
 	}
