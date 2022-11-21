@@ -330,15 +330,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 	var rowIndex int
 
 	for results.Next() {
-		placeholders = append(placeholders, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d)",
-			rowIndex*7+1,
-			rowIndex*7+2,
-			rowIndex*7+3,
-			rowIndex*7+4,
-			rowIndex*7+5,
-			rowIndex*7+6,
-			rowIndex*7+7,
-		))
+		placeholders = append(placeholders, "(?, ?, ?, ?, ?, ?, ?)")
 
 		entry := &common.RankingEntry{}
 		if hasFloatValue {
