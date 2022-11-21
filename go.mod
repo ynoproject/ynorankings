@@ -1,4 +1,4 @@
-module ynorankings
+module github.com/ynoproject/ynorankings
 
 go 1.19
 

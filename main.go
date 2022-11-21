@@ -1,9 +1,9 @@
 package main
 
 import (
-	"ynorankings/api"
-	"ynorankings/database"
-	"ynorankings/rankings"
+	"github.com/ynoproject/ynorankings/api"
+	"github.com/ynoproject/ynorankings/database"
+	"github.com/ynoproject/ynorankings/rankings"
 )
 
 func main() {

@@ -4,8 +4,9 @@ import (
 	"log"
 	"strconv"
 	"time"
-	"ynorankings/common"
-	"ynorankings/database"
+
+	"github.com/ynoproject/ynorankings/common"
+	"github.com/ynoproject/ynorankings/database"
 
 	"github.com/go-co-op/gocron"
 )

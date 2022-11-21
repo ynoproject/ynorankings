@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"ynorankings/database"
+
+	"github.com/ynoproject/ynorankings/database"
 )
 
 func Init() {

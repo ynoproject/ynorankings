@@ -6,7 +6,8 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"ynorankings/common"
+
+	"github.com/ynoproject/ynorankings/common"
 
 	_ "github.com/go-sql-driver/mysql"
 )
