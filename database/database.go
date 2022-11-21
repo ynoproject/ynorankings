@@ -15,7 +15,7 @@ import (
 var Conn *sql.DB
 
 func Init() {
-	conn, err := sql.Open("mysql", "yno@unix(/run/mysqld/mysqld.sock/ynodb)?parseTime=true")
+	conn, err := sql.Open("mysql", "yno@unix(/run/mysqld/mysqld.sock)/ynodb?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 		return
