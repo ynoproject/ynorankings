@@ -201,7 +201,7 @@ func GetRankingsPaged(gameName string, categoryId string, subCategoryId string, 
 		valueType = "Int"
 	}
 
-	results, err := Conn.Query("SELECT r.position, a.user, pd.rank, a.badge, COALESCE(pgd.systemName, ''), r.value"+valueType+" FROM rankingEntries r JOIN accounts a ON a.uuid = r.uuid JOIN players pd ON pd.uuid = a.uuid LEFT JOIN playerGameData pgd ON pgd.uuid = pd.uuid AND pgd.game = ? WHERE r.categoryId = ? AND r.subCategoryId = ? ORDER BY 1, r.timestamp LIMIT "+strconv.Itoa((page-1)*25)+", 25", gameName, subCategoryId)
+	results, err := Conn.Query("SELECT r.position, a.user, pd.rank, a.badge, COALESCE(pgd.systemName, ''), r.value"+valueType+" FROM rankingEntries r JOIN accounts a ON a.uuid = r.uuid JOIN players pd ON pd.uuid = a.uuid LEFT JOIN playerGameData pgd ON pgd.uuid = pd.uuid AND pgd.game = ? WHERE r.categoryId = ? AND r.subCategoryId = ? ORDER BY 1, r.timestamp LIMIT "+strconv.Itoa((page-1)*25)+", 25", gameName, categoryId, subCategoryId)
 	if err != nil {
 		return rankings, err
 	}
