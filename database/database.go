@@ -319,7 +319,6 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 		results, err = Conn.Query(query, categoryId, subCategoryId)
 	}
 	if err != nil {
-		results.Close()
 		return err
 	}
 
