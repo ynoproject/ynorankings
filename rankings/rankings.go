@@ -156,4 +156,6 @@ func Init() {
 			}
 		}
 	})
+
+	scheduler.StartAsync()
 }
