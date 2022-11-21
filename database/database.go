@@ -228,11 +228,9 @@ func GetRankingsPaged(gameName string, categoryId string, subCategoryId string, 
 
 func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 	var valueType string
-	var hasFloatValue bool
 	switch categoryId {
 	case "eventLocationCompletion":
 		valueType = "Float"
-		hasFloatValue = true
 	default:
 		valueType = "Int"
 	}
@@ -245,7 +243,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 	isFiltered := subCategoryId != "all"
 	var isUnion bool
 
-	query := " "
+	var query string
 	switch categoryId {
 	case "badgeCount":
 		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(pb.uuid) DESC), 0, a.uuid, COUNT(pb.uuid), (SELECT MAX(apb.timestampUnlocked) FROM playerBadges apb WHERE apb.uuid = a.uuid AND apb.badgeId = b.badgeId) FROM playerBadges pb JOIN accounts a ON a.uuid = pb.uuid JOIN badges b ON b.badgeId = pb.badgeId WHERE b.hidden = 0"
@@ -271,10 +269,9 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 		query += ")) ec GROUP BY ec.uuid"
 		isUnion = true
 	case "eventLocationCount", "freeEventLocationCount":
-		isFree := categoryId == "freeEventLocationCount"
 		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(ec.uuid) DESC), 0, ec.uuid, COUNT(ec.uuid), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid) FROM eventCompletions ec "
 		if isFiltered {
-			if isFree {
+			if categoryId == "freeEventLocationCount" {
 				query += "JOIN playerEventLocations el"
 			} else {
 				query += "JOIN eventLocations el"
@@ -282,7 +279,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 			query += " ON el.id = ec.eventId JOIN eventPeriods ep ON ep.id = el.periodId AND ep.periodOrdinal = ? "
 		}
 		query += "WHERE ec.type = "
-		if isFree {
+		if categoryId == "freeEventLocationCount" {
 			query += "1"
 		} else {
 			query += "0"
@@ -325,20 +322,20 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 	defer results.Close()
 
 	var placeholders []string
-	var entryValues []interface{}
-	var rowIndex int
+	var entryValues []any
 
+	var rowIndex int
 	for results.Next() {
 		placeholders = append(placeholders, "(?, ?, ?, ?, ?, ?, ?)")
 
 		entry := &common.RankingEntry{}
-		if hasFloatValue {
+		if valueType == "Float" {
 			results.Scan(&entry.CategoryId, &entry.SubCategoryId, &entry.Position, &entry.ActualPosition, &entry.Uuid, &entry.ValueFloat, &entry.Timestamp)
 		} else {
 			results.Scan(&entry.CategoryId, &entry.SubCategoryId, &entry.Position, &entry.ActualPosition, &entry.Uuid, &entry.ValueInt, &entry.Timestamp)
 		}
 		entryValues = append(entryValues, entry.CategoryId, entry.SubCategoryId, entry.Position, entry.ActualPosition, entry.Uuid)
-		if hasFloatValue {
+		if valueType == "Float" {
 			entryValues = append(entryValues, entry.ValueFloat)
 		} else {
 			entryValues = append(entryValues, entry.ValueInt)
