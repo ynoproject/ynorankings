@@ -246,13 +246,13 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 	var query string
 	switch categoryId {
 	case "badgeCount":
-		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(pb.uuid) DESC), 0, a.uuid, COUNT(pb.uuid), (SELECT MAX(apb.timestampUnlocked) FROM playerBadges apb WHERE apb.uuid = a.uuid AND apb.badgeId = b.badgeId) FROM playerBadges pb JOIN accounts a ON a.uuid = pb.uuid JOIN badges b ON b.badgeId = pb.badgeId WHERE b.hidden = 0"
+		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(pb.uuid) DESC), 0, a.uuid, COUNT(pb.uuid), (SELECT MAX(apb.timestampUnlocked) FROM playerBadges apb JOIN badges ab ON ab.badgeId = apb.badgeId WHERE apb.uuid = a.uuid AND ab.game = b.game) FROM playerBadges pb JOIN accounts a ON a.uuid = pb.uuid JOIN badges b ON b.badgeId = pb.badgeId WHERE b.hidden = 0"
 		if isFiltered {
 			query += " AND b.game = ?"
 		}
 		query += " GROUP BY a.uuid"
 	case "bp":
-		query = "SELECT ?, ?, RANK() OVER (ORDER BY SUM(b.bp) DESC), 0, a.uuid, SUM(b.bp), (SELECT MAX(apb.timestampUnlocked) FROM playerBadges apb WHERE apb.uuid = a.uuid AND apb.badgeId = b.badgeId) FROM playerBadges pb JOIN accounts a ON a.uuid = pb.uuid JOIN badges b ON b.badgeId = pb.badgeId"
+		query = "SELECT ?, ?, RANK() OVER (ORDER BY SUM(b.bp) DESC), 0, a.uuid, SUM(b.bp), (SELECT MAX(apb.timestampUnlocked) FROM playerBadges apb JOIN badges ab ON ab.badgeId = apb.badgeId WHERE apb.uuid = a.uuid AND ab.game = b.game) FROM playerBadges pb JOIN accounts a ON a.uuid = pb.uuid JOIN badges b ON b.badgeId = pb.badgeId"
 		if isFiltered {
 			query += " WHERE b.game = ?"
 		}
