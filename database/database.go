@@ -201,7 +201,7 @@ func GetRankingsPaged(gameName string, categoryId string, subCategoryId string, 
 		valueType = "Int"
 	}
 
-	results, err := Conn.Query("SELECT r.position, a.user, pd.rank, a.badge, COALESCE(pgd.systemName, ''), r.value"+valueType+" FROM rankingEntries r JOIN accounts a ON a.uuid = r.uuid JOIN players pd ON pd.uuid = a.uuid LEFT JOIN playerGameData pgd ON pgd.uuid = pd.uuid AND pgd.game = ? WHERE r.categoryId = ? AND r.subCategoryId = ? ORDER BY r.actualPosition LIMIT "+strconv.Itoa((page-1)*25)+", 25", gameName, categoryId, subCategoryId)
+	results, err := Conn.Query("SELECT r.position, a.user, pd.rank, a.badge, COALESCE(pgd.systemName, ''), pgd.medalCountBronze, pgd.medalCountSilver, pgd.medalCountGold, pgd.medalCountPlatinum, pgd.medalCountDiamond, r.value"+valueType+" FROM rankingEntries r JOIN accounts a ON a.uuid = r.uuid JOIN players pd ON pd.uuid = a.uuid LEFT JOIN playerGameData pgd ON pgd.uuid = pd.uuid AND pgd.game = ? WHERE r.categoryId = ? AND r.subCategoryId = ? ORDER BY r.actualPosition LIMIT "+strconv.Itoa((page-1)*25)+", 25", gameName, categoryId, subCategoryId)
 	if err != nil {
 		return rankings, err
 	}
@@ -212,9 +212,9 @@ func GetRankingsPaged(gameName string, categoryId string, subCategoryId string, 
 		ranking := &common.Ranking{}
 
 		if valueType == "Int" {
-			err = results.Scan(&ranking.Position, &ranking.Name, &ranking.Rank, &ranking.Badge, &ranking.SystemName, &ranking.ValueInt)
+			err = results.Scan(&ranking.Position, &ranking.Name, &ranking.Rank, &ranking.Badge, &ranking.SystemName, &ranking.Medals[0], &ranking.Medals[1], &ranking.Medals[2], &ranking.Medals[3], &ranking.Medals[4], &ranking.ValueInt)
 		} else {
-			err = results.Scan(&ranking.Position, &ranking.Name, &ranking.Rank, &ranking.Badge, &ranking.SystemName, &ranking.ValueFloat)
+			err = results.Scan(&ranking.Position, &ranking.Name, &ranking.Rank, &ranking.Badge, &ranking.SystemName, &ranking.Medals[0], &ranking.Medals[1], &ranking.Medals[2], &ranking.Medals[3], &ranking.Medals[4], &ranking.ValueFloat)
 		}
 		if err != nil {
 			return rankings, err

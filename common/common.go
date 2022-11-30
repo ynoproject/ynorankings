@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	GameNames = []string{"2kki", "amillusion", "braingirl", "deepdreams", "flow", "muma", "prayers", "someday", "unevendream", "yume"}
+	GameNames                 = []string{"2kki", "amillusion", "braingirl", "deepdreams", "flow", "muma", "prayers", "someday", "unevendream", "yume"}
 	GameRankingCategories     = make(map[string][]*RankingCategory)
 	GameCurrentEventPeriodIds = make(map[string]int)
 )
@@ -34,17 +34,18 @@ type Ranking struct {
 	Rank       int     `json:"rank"`
 	Badge      string  `json:"badge"`
 	SystemName string  `json:"systemName"`
+	Medals     [5]int  `json:"medals"`
 	ValueInt   int     `json:"valueInt"`
 	ValueFloat float32 `json:"valueFloat"`
 }
 
 type RankingEntry struct {
-	CategoryId string
-	SubCategoryId string
-	Position int
+	CategoryId     string
+	SubCategoryId  string
+	Position       int
 	ActualPosition int
-	Uuid string
-	ValueInt int
-	ValueFloat float32
-	Timestamp time.Time
+	Uuid           string
+	ValueInt       int
+	ValueFloat     float32
+	Timestamp      time.Time
 }
