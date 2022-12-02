@@ -303,7 +303,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 		query = "SELECT ?, ?, RANK() OVER (ORDER BY MAX(ms.score) DESC), 0, ms.uuid, MAX(ms.score), (SELECT MAX(ams.timestampCompleted) FROM playerMinigameScores ams WHERE ams.uuid = ms.uuid AND ams.minigameId = ms.minigameId AND ams.score = ms.score) FROM playerMinigameScores ms WHERE ms.minigameId = ? GROUP BY ms.uuid"
 	}
 
-	query += " ORDER BY 3, 6"
+	query += " ORDER BY 3, 7"
 
 	var results *sql.Rows
 	if isFiltered {
