@@ -129,7 +129,7 @@ func Init() {
 			}
 		}
 
-		common.GameCurrentEventPeriodIds[gameName], _ = database.GetCurrentEventPeriodId(gameName)
+		common.GameCurrentEventPeriodOrdinals[gameName], _ = database.GetCurrentEventPeriodOrdinal(gameName)
 
 		common.GameRankingCategories[gameName] = rankingCategories
 	}

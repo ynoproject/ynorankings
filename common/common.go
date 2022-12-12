@@ -5,9 +5,9 @@ import (
 )
 
 var (
-	GameNames                 = []string{"2kki", "amillusion", "braingirl", "deepdreams", "flow", "muma", "prayers", "someday", "unevendream", "yume"}
-	GameRankingCategories     = make(map[string][]*RankingCategory)
-	GameCurrentEventPeriodIds = make(map[string]int)
+	GameNames                      = []string{"2kki", "amillusion", "braingirl", "deepdreams", "flow", "muma", "prayers", "someday", "unevendream", "yume"}
+	GameRankingCategories          = make(map[string][]*RankingCategory)
+	GameCurrentEventPeriodOrdinals = make(map[string]int)
 )
 
 type EventPeriod struct {
