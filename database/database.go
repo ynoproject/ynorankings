@@ -56,7 +56,7 @@ func GetEventPeriodData(gameName string) (eventPeriods []*common.EventPeriod, er
 }
 
 func GetCurrentEventPeriodOrdinal(gameName string) (periodOrdinal int, err error) {
-	err = Conn.QueryRow("SELECT ordinal FROM eventPeriods WHERE game = ? AND UTC_DATE() >= startDate AND UTC_DATE() < endDate", gameName).Scan(&periodOrdinal)
+	err = Conn.QueryRow("SELECT periodOrdinal FROM eventPeriods WHERE game = ? AND UTC_DATE() >= startDate AND UTC_DATE() < endDate", gameName).Scan(&periodOrdinal)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, nil
