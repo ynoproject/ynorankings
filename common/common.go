@@ -5,9 +5,9 @@ import (
 )
 
 var (
-	GameNames                      = []string{"2kki", "amillusion", "braingirl", "deepdreams", "flow", "muma", "prayers", "someday", "unevendream", "yume"}
-	GameRankingCategories          = make(map[string][]*RankingCategory)
-	GameCurrentEventPeriodOrdinals = make(map[string]int)
+	GameNames                 = []string{"2kki", "amillusion", "braingirl", "deepdreams", "flow", "muma", "prayers", "someday", "unevendream", "yume"}
+	GameRankingCategories     = make(map[string][]*RankingCategory)
+	CurrentEventPeriodOrdinal = -1
 )
 
 type EventPeriod struct {
@@ -20,6 +20,7 @@ type RankingCategory struct {
 	CategoryId    string               `json:"categoryId"`
 	Game          string               `json:"game"`
 	SubCategories []RankingSubCategory `json:"subCategories"`
+	Periodic      bool                 `json:"periodic"`
 }
 
 type RankingSubCategory struct {

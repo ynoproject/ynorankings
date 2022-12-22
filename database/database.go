@@ -55,8 +55,8 @@ func GetEventPeriodData(gameName string) (eventPeriods []*common.EventPeriod, er
 	return eventPeriods, nil
 }
 
-func GetCurrentEventPeriodOrdinal(gameName string) (periodOrdinal int, err error) {
-	err = Conn.QueryRow("SELECT periodOrdinal FROM eventPeriods WHERE game = ? AND UTC_DATE() >= startDate AND UTC_DATE() < endDate", gameName).Scan(&periodOrdinal)
+func GetCurrentEventPeriodOrdinal() (periodOrdinal int, err error) {
+	err = Conn.QueryRow("SELECT periodOrdinal FROM eventPeriods WHERE UTC_DATE() >= startDate AND UTC_DATE() < endDate").Scan(&periodOrdinal)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, nil
@@ -260,11 +260,11 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 	case "exp":
 		query = "SELECT ?, ?, RANK() OVER (ORDER BY SUM(ec.exp) DESC), 0, ec.uuid, SUM(ec.exp), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid) FROM ((SELECT ec.uuid, ec.exp FROM eventCompletions ec JOIN eventLocations el ON el.id = ec.eventId AND ec.type = 0"
 		if isFiltered {
-			query += " JOIN eventPeriods ep ON ep.id = el.periodId AND ep.periodOrdinal = ?"
+			query += " JOIN gameEventPeriods gep ON gep.id = el.gamePeriodId JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ?"
 		}
 		query += ") UNION ALL (SELECT ec.uuid, ec.exp FROM eventCompletions ec JOIN eventVms ev ON ev.id = ec.eventId AND ec.type = 2"
 		if isFiltered {
-			query += " JOIN eventPeriods ep ON ep.id = ev.periodId AND ep.periodOrdinal = ?"
+			query += " JOIN gameEventPeriods gep ON gep.id = ev.gamePeriodId JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ?"
 		}
 		query += ")) ec GROUP BY ec.uuid"
 		isUnion = true
@@ -276,7 +276,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 			} else {
 				query += "JOIN eventLocations el"
 			}
-			query += " ON el.id = ec.eventId JOIN eventPeriods ep ON ep.id = el.periodId AND ep.periodOrdinal = ? "
+			query += " ON el.id = ec.eventId JOIN gameEventPeriods gep ON gep.id = el.gamePeriodId JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ? "
 		}
 		query += "WHERE ec.type = "
 		if categoryId == "freeEventLocationCount" {
@@ -288,13 +288,13 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 	case "eventLocationCompletion":
 		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(DISTINCT COALESCE(el.title, pel.title)) / aec.count DESC), 0, a.uuid, COUNT(DISTINCT COALESCE(el.title, pel.title)) / aec.count, (SELECT MAX(aect.timestampCompleted) FROM eventCompletions aect WHERE aect.uuid = ec.uuid) FROM eventCompletions ec JOIN accounts a ON a.uuid = ec.uuid LEFT JOIN eventLocations el ON el.id = ec.eventId AND ec.type = 0 LEFT JOIN playerEventLocations pel ON pel.id = ec.eventId AND ec.type = 1 JOIN (SELECT COUNT(DISTINCT COALESCE(ael.title, apel.title)) count FROM eventCompletions aec LEFT JOIN eventLocations ael ON ael.id = aec.eventId AND aec.type = 0 LEFT JOIN playerEventLocations apel ON apel.id = aec.eventId AND aec.type = 1 WHERE (ael.title IS NOT NULL OR apel.title IS NOT NULL)) aec"
 		if isFiltered {
-			query += " JOIN eventPeriods ep ON ep.id = COALESCE(el.periodId, pel.periodId) AND ep.periodOrdinal = ?"
+			query += " JOIN gameEventPeriods gep ON gep.id = COALESCE(el.gamePeriodId, pel.gamePeriodId) JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ?"
 		}
 		query += " GROUP BY a.user"
 	case "eventVmCount":
 		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(ec.uuid) DESC), 0, ec.uuid, COUNT(ec.uuid), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid) FROM eventCompletions ec "
 		if isFiltered {
-			query += "JOIN eventVms ev ON ev.id = ec.eventId JOIN eventPeriods ep ON ep.id = ev.periodId AND ep.periodOrdinal = ? "
+			query += "JOIN eventVms ev ON ev.id = ec.eventId JOIN gameEventPeriods gep ON gep.id = ev.gamePeriodId JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ? "
 		}
 		query += "WHERE ec.type = 2 GROUP BY ec.uuid"
 	case "timeTrial":
@@ -368,7 +368,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 }
 
 func UpdatePlayerMedals(gameName string) (err error) {
-	_, err = Conn.Exec("UPDATE playerGameData pgd JOIN (SELECT uuid, SUM(CASE WHEN actualPosition <= 100 AND actualPosition > 30 THEN 1 ELSE 0 END) bronze, SUM(CASE WHEN actualPosition <= 30 AND actualPosition > 10 THEN 1 ELSE 0 END) silver, SUM(CASE WHEN actualPosition <= 10 AND actualPosition > 1 THEN 1 ELSE 0 END) gold, SUM(CASE WHEN actualPosition <= 3 AND actualPosition > 1 THEN 1 ELSE 0 END) plat, SUM(CASE WHEN actualPosition = 1 THEN 1 ELSE 0 END) diamond FROM rankingEntries e JOIN rankingCategories rc ON rc.categoryId = e.categoryId JOIN rankingSubCategories rsc ON rsc.categoryId = e.categoryId AND rsc.subCategoryId = e.subCategoryId AND rc.game IN ('', ?) AND rsc.game IN ('', ?) WHERE (rc.periodic = 0 OR e.subCategoryId IN ('all', ?)) GROUP BY uuid) m ON m.uuid = pgd.uuid SET pgd.medalCountBronze = m.bronze, pgd.medalCountSilver = m.silver, pgd.medalCountGold = m.gold, pgd.medalCountPlatinum = m.plat, pgd.medalCountDiamond = m.diamond WHERE pgd.game = ?", gameName, gameName, common.GameCurrentEventPeriodOrdinals[gameName], gameName)
+	_, err = Conn.Exec("UPDATE playerGameData pgd JOIN (SELECT uuid, SUM(CASE WHEN actualPosition <= 100 AND actualPosition > 30 THEN 1 ELSE 0 END) bronze, SUM(CASE WHEN actualPosition <= 30 AND actualPosition > 10 THEN 1 ELSE 0 END) silver, SUM(CASE WHEN actualPosition <= 10 AND actualPosition > 1 THEN 1 ELSE 0 END) gold, SUM(CASE WHEN actualPosition <= 3 AND actualPosition > 1 THEN 1 ELSE 0 END) plat, SUM(CASE WHEN actualPosition = 1 THEN 1 ELSE 0 END) diamond FROM rankingEntries e JOIN rankingCategories rc ON rc.categoryId = e.categoryId JOIN rankingSubCategories rsc ON rsc.categoryId = e.categoryId AND rsc.subCategoryId = e.subCategoryId AND rc.game IN ('', ?) AND rsc.game IN ('', ?) WHERE (rc.periodic = 0 OR e.subCategoryId IN ('all', ?)) GROUP BY uuid) m ON m.uuid = pgd.uuid SET pgd.medalCountBronze = m.bronze, pgd.medalCountSilver = m.silver, pgd.medalCountGold = m.gold, pgd.medalCountPlatinum = m.plat, pgd.medalCountDiamond = m.diamond WHERE pgd.game = ?", gameName, gameName, common.CurrentEventPeriodOrdinal, gameName)
 	if err != nil {
 		return err
 	}
