@@ -147,6 +147,11 @@ func GetRankingCategories(gameName string) (rankingCategories []*common.RankingC
 			return rankingCategories, err
 		}
 
+		// Maximum 40 pages of 25 (1000 records)
+		if rankingSubCategory.PageCount > 40 {
+			rankingSubCategory.PageCount = 40
+		}
+
 		if lastCategoryId != categoryId {
 			lastCategoryId = categoryId
 			for _, rankingCategory := range rankingCategories {
@@ -187,6 +192,10 @@ func GetRankingEntryPage(playerUuid string, categoryId string, subCategoryId str
 			return 1, nil
 		}
 		return 1, err
+	}
+
+	if page > 40 {
+		page = 1
 	}
 
 	return page, nil
@@ -326,14 +335,19 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 
 	var rowIndex int
 	for results.Next() {
-		placeholders = append(placeholders, "(?, ?, ?, ?, ?, ?, ?)")
-
 		entry := &common.RankingEntry{}
 		if valueType == "Float" {
 			results.Scan(&entry.CategoryId, &entry.SubCategoryId, &entry.Position, &entry.ActualPosition, &entry.Uuid, &entry.ValueFloat, &entry.Timestamp)
+			if entry.ValueFloat <= 0 {
+				break
+			}
 		} else {
 			results.Scan(&entry.CategoryId, &entry.SubCategoryId, &entry.Position, &entry.ActualPosition, &entry.Uuid, &entry.ValueInt, &entry.Timestamp)
+			if entry.ValueInt <= 0 {
+				break
+			}
 		}
+		placeholders = append(placeholders, "(?, ?, ?, ?, ?, ?, ?)")
 		entryValues = append(entryValues, entry.CategoryId, entry.SubCategoryId, entry.Position, entry.ActualPosition, entry.Uuid)
 		if valueType == "Float" {
 			entryValues = append(entryValues, entry.ValueFloat)
@@ -341,10 +355,6 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 			entryValues = append(entryValues, entry.ValueInt)
 		}
 		entryValues = append(entryValues, entry.Timestamp)
-
-		if rowIndex == 1000 {
-			break
-		}
 
 		rowIndex++
 	}
