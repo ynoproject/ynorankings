@@ -34,7 +34,7 @@ func GetPlayerUuidFromToken(token string) (uuid string) {
 }
 
 func GetEventPeriodData(gameName string) (eventPeriods []*common.EventPeriod, err error) {
-	results, err := Conn.Query("SELECT periodOrdinal, endDate, enableVms FROM eventPeriods WHERE game = ? AND periodOrdinal > 0", gameName)
+	results, err := Conn.Query("SELECT ep.periodOrdinal, ep.endDate, gep.enableVms FROM eventPeriods ep JOIN gameEventPeriods gep ON gep.periodId = ep.id AND gep.game = ? WHERE ep.periodOrdinal > 0", gameName)
 	if err != nil {
 		return eventPeriods, err
 	}
