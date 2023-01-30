@@ -17,10 +17,11 @@ type EventPeriod struct {
 }
 
 type RankingCategory struct {
-	CategoryId    string               `json:"categoryId"`
-	Game          string               `json:"game"`
-	SubCategories []RankingSubCategory `json:"subCategories"`
-	Periodic      bool                 `json:"periodic"`
+	CategoryId     string               `json:"categoryId"`
+	Game           string               `json:"game"`
+	SubCategories  []RankingSubCategory `json:"subCategories"`
+	Periodic       bool                 `json:"periodic"`
+	SeparateByGame bool                 `json:"-"`
 }
 
 type RankingSubCategory struct {

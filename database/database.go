@@ -235,7 +235,7 @@ func GetRankingsPaged(gameName string, categoryId string, subCategoryId string, 
 	return rankings, nil
 }
 
-func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
+func UpdateRankingEntries(categoryId string, subCategoryId string, gameId string) (err error) {
 	var valueType string
 	switch categoryId {
 	case "eventLocationCompletion":
@@ -249,8 +249,11 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 		return err
 	}
 
+	var queryArgs []any
+
+	queryArgs = append(queryArgs, categoryId, subCategoryId)
+
 	isFiltered := subCategoryId != "all"
-	var isUnion bool
 
 	var query string
 	switch categoryId {
@@ -274,24 +277,29 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 		query += ") UNION ALL (SELECT ec.uuid, ec.exp FROM eventCompletions ec JOIN eventVms ev ON ev.id = ec.eventId AND ec.type = 2"
 		if isFiltered {
 			query += " JOIN gameEventPeriods gep ON gep.id = ev.gamePeriodId JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ?"
+			queryArgs = append(queryArgs, subCategoryId)
 		}
 		query += ")) ec GROUP BY ec.uuid"
-		isUnion = true
-	case "eventLocationCount", "freeEventLocationCount":
+	case "eventLocationCount", "freeEventLocationCount_" + gameId:
 		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(ec.uuid) DESC), 0, ec.uuid, COUNT(ec.uuid), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid) FROM eventCompletions ec "
 		if isFiltered {
-			if categoryId == "freeEventLocationCount" {
-				query += "JOIN playerEventLocations el"
-			} else {
+			if categoryId == "eventLocationCount" {
 				query += "JOIN eventLocations el"
+			} else {
+				query += "JOIN playerEventLocations el"
 			}
-			query += " ON el.id = ec.eventId JOIN gameEventPeriods gep ON gep.id = el.gamePeriodId JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ? "
+			query += " ON el.id = ec.eventId JOIN gameEventPeriods gep ON gep.id = el.gamePeriodId "
+			if categoryId != "eventLocationCount" {
+				query += "AND gep.game = ? "
+				queryArgs = append(queryArgs, gameId)
+			}
+			query += "JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ? "
 		}
 		query += "WHERE ec.type = "
-		if categoryId == "freeEventLocationCount" {
-			query += "1"
-		} else {
+		if categoryId == "eventLocationCount" {
 			query += "0"
+		} else {
+			query += "1"
 		}
 		query += " GROUP BY ec.uuid"
 	case "eventLocationCompletion":
@@ -314,16 +322,11 @@ func UpdateRankingEntries(categoryId string, subCategoryId string) (err error) {
 
 	query += " ORDER BY 3, 7"
 
-	var results *sql.Rows
 	if isFiltered {
-		if isUnion {
-			results, err = Conn.Query(query, categoryId, subCategoryId, subCategoryId, subCategoryId)
-		} else {
-			results, err = Conn.Query(query, categoryId, subCategoryId, subCategoryId)
-		}
-	} else {
-		results, err = Conn.Query(query, categoryId, subCategoryId)
+		queryArgs = append(queryArgs, subCategoryId)
 	}
+
+	results, err := Conn.Query(query, queryArgs...)
 	if err != nil {
 		return err
 	}

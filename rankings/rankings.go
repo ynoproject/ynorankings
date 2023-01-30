@@ -37,27 +37,27 @@ func Init() {
 		if err != nil {
 			log.Print("SERVER", "exp", err.Error())
 		} else if len(eventPeriods) > 0 {
-			expCategory := &common.RankingCategory{CategoryId: "exp", Game: gameName, Periodic: true}
+			expCategory := &common.RankingCategory{CategoryId: "exp", Periodic: true}
 			rankingCategories = append(rankingCategories, expCategory)
 
 			if len(eventPeriods) > 1 {
-				expCategory.SubCategories = append(expCategory.SubCategories, common.RankingSubCategory{SubCategoryId: "all", Game: gameName})
+				expCategory.SubCategories = append(expCategory.SubCategories, common.RankingSubCategory{SubCategoryId: "all"})
 			}
 			for _, eventPeriod := range eventPeriods {
-				expCategory.SubCategories = append(expCategory.SubCategories, common.RankingSubCategory{SubCategoryId: strconv.Itoa(eventPeriod.PeriodOrdinal), Game: gameName})
+				expCategory.SubCategories = append(expCategory.SubCategories, common.RankingSubCategory{SubCategoryId: strconv.Itoa(eventPeriod.PeriodOrdinal)})
 			}
 
-			eventLocationCountCategory := &common.RankingCategory{CategoryId: "eventLocationCount", Game: gameName, Periodic: true}
+			eventLocationCountCategory := &common.RankingCategory{CategoryId: "eventLocationCount", Periodic: true}
 			rankingCategories = append(rankingCategories, eventLocationCountCategory)
 
 			if len(eventPeriods) > 1 {
-				eventLocationCountCategory.SubCategories = append(eventLocationCountCategory.SubCategories, common.RankingSubCategory{SubCategoryId: "all", Game: gameName})
+				eventLocationCountCategory.SubCategories = append(eventLocationCountCategory.SubCategories, common.RankingSubCategory{SubCategoryId: "all"})
 			}
 			for _, eventPeriod := range eventPeriods {
-				eventLocationCountCategory.SubCategories = append(eventLocationCountCategory.SubCategories, common.RankingSubCategory{SubCategoryId: strconv.Itoa(eventPeriod.PeriodOrdinal), Game: gameName})
+				eventLocationCountCategory.SubCategories = append(eventLocationCountCategory.SubCategories, common.RankingSubCategory{SubCategoryId: strconv.Itoa(eventPeriod.PeriodOrdinal)})
 			}
 
-			freeEventLocationCountCategory := &common.RankingCategory{CategoryId: "freeEventLocationCount", Game: gameName, Periodic: true}
+			freeEventLocationCountCategory := &common.RankingCategory{CategoryId: "freeEventLocationCount", Game: gameName, Periodic: true, SeparateByGame: true}
 			rankingCategories = append(rankingCategories, freeEventLocationCountCategory)
 
 			if len(eventPeriods) > 1 {
@@ -67,27 +67,29 @@ func Init() {
 				freeEventLocationCountCategory.SubCategories = append(freeEventLocationCountCategory.SubCategories, common.RankingSubCategory{SubCategoryId: strconv.Itoa(eventPeriod.PeriodOrdinal), Game: gameName})
 			}
 
-			eventLocationCompletionCategory := &common.RankingCategory{CategoryId: "eventLocationCompletion", Game: gameName, Periodic: true}
-			rankingCategories = append(rankingCategories, eventLocationCompletionCategory)
+			if gameName == "2kki" {
+				eventLocationCompletionCategory := &common.RankingCategory{CategoryId: "eventLocationCompletion", Game: gameName, Periodic: true}
+				rankingCategories = append(rankingCategories, eventLocationCompletionCategory)
 
-			if len(eventPeriods) > 1 {
-				eventLocationCompletionCategory.SubCategories = append(eventLocationCompletionCategory.SubCategories, common.RankingSubCategory{SubCategoryId: "all", Game: gameName})
-			}
-			for _, eventPeriod := range eventPeriods {
-				eventLocationCompletionCategory.SubCategories = append(eventLocationCompletionCategory.SubCategories, common.RankingSubCategory{SubCategoryId: strconv.Itoa(eventPeriod.PeriodOrdinal), Game: gameName})
+				if len(eventPeriods) > 1 {
+					eventLocationCompletionCategory.SubCategories = append(eventLocationCompletionCategory.SubCategories, common.RankingSubCategory{SubCategoryId: "all", Game: gameName})
+				}
+				for _, eventPeriod := range eventPeriods {
+					eventLocationCompletionCategory.SubCategories = append(eventLocationCompletionCategory.SubCategories, common.RankingSubCategory{SubCategoryId: strconv.Itoa(eventPeriod.PeriodOrdinal), Game: gameName})
+				}
 			}
 
-			eventVmCountCategory := &common.RankingCategory{CategoryId: "eventVmCount", Game: gameName, Periodic: true}
+			eventVmCountCategory := &common.RankingCategory{CategoryId: "eventVmCount", Periodic: true}
 			rankingCategories = append(rankingCategories, eventVmCountCategory)
 
 			for _, eventPeriod := range eventPeriods {
 				if eventPeriod.EnableVms {
-					eventVmCountCategory.SubCategories = append(eventVmCountCategory.SubCategories, common.RankingSubCategory{SubCategoryId: strconv.Itoa(eventPeriod.PeriodOrdinal), Game: gameName})
+					eventVmCountCategory.SubCategories = append(eventVmCountCategory.SubCategories, common.RankingSubCategory{SubCategoryId: strconv.Itoa(eventPeriod.PeriodOrdinal)})
 				}
 			}
 
 			if len(eventVmCountCategory.SubCategories) > 1 {
-				eventVmCountCategory.SubCategories = append([]common.RankingSubCategory{{SubCategoryId: "all", Game: gameName}}, eventVmCountCategory.SubCategories...)
+				eventVmCountCategory.SubCategories = append([]common.RankingSubCategory{{SubCategoryId: "all"}}, eventVmCountCategory.SubCategories...)
 			}
 		}
 
@@ -118,15 +120,21 @@ func Init() {
 		}
 
 		for c, category := range rankingCategories {
-			err := database.WriteRankingCategory(category.CategoryId, category.Game, c)
+			categoryId := category.CategoryId
+			if category.SeparateByGame {
+				categoryId += "_" + category.Game
+			} else if category.Periodic && category.Game == "" && gameName != "2kki" {
+				continue
+			}
+			err := database.WriteRankingCategory(categoryId, category.Game, c)
 			if err != nil {
-				log.Print("SERVER", category.CategoryId, err.Error())
+				log.Print("SERVER", categoryId, err.Error())
 				continue
 			}
 			for sc, subCategory := range category.SubCategories {
-				err = database.WriteRankingSubCategory(category.CategoryId, subCategory.SubCategoryId, subCategory.Game, sc)
+				err = database.WriteRankingSubCategory(categoryId, subCategory.SubCategoryId, subCategory.Game, sc)
 				if err != nil {
-					log.Print("SERVER", category.CategoryId+"/"+subCategory.SubCategoryId, err.Error())
+					log.Print("SERVER", categoryId+"/"+subCategory.SubCategoryId, err.Error())
 				}
 			}
 		}
@@ -137,9 +145,13 @@ func Init() {
 	scheduler.Every(15).Minute().Do(func() {
 		for _, gameName := range common.GameNames {
 			for _, category := range common.GameRankingCategories[gameName] {
+				categoryId := category.CategoryId
+				if category.SeparateByGame {
+					categoryId += "_" + category.Game
+				}
 				for _, subCategory := range category.SubCategories {
 					// Use Yume 2kki server to update 'all' rankings
-					if subCategory.SubCategoryId == "all" && gameName != "2kki" {
+					if subCategory.SubCategoryId == "all" && !category.SeparateByGame && gameName != "2kki" {
 						continue
 					}
 					if category.Periodic && subCategory.SubCategoryId != "all" {
@@ -149,9 +161,9 @@ func Init() {
 						}
 					}
 
-					err := database.UpdateRankingEntries(category.CategoryId, subCategory.SubCategoryId)
+					err := database.UpdateRankingEntries(categoryId, subCategory.SubCategoryId, subCategory.Game)
 					if err != nil {
-						log.Print("SERVER", gameName+"/"+category.CategoryId+"/"+subCategory.SubCategoryId, err.Error())
+						log.Print("SERVER", gameName+"/"+categoryId+"/"+subCategory.SubCategoryId, err.Error())
 					}
 				}
 			}
