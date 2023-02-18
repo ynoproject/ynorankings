@@ -210,7 +210,7 @@ func GetRankingsPaged(gameName string, categoryId string, subCategoryId string, 
 		valueType = "Int"
 	}
 
-	results, err := Conn.Query("SELECT r.position, a.user, pd.rank, a.badge, COALESCE(pgd.systemName, ''), COALESCE(pgd.medalCountBronze, 0), COALESCE(pgd.medalCountSilver, 0), COALESCE(pgd.medalCountGold, 0), COALESCE(pgd.medalCountPlatinum, 0), COALESCE(pgd.medalCountDiamond, 0), r.value"+valueType+" FROM rankingEntries r JOIN accounts a ON a.uuid = r.uuid JOIN players pd ON pd.uuid = a.uuid LEFT JOIN playerGameData pgd ON pgd.uuid = pd.uuid AND pgd.game = ? WHERE r.categoryId = ? AND r.subCategoryId = ? ORDER BY r.actualPosition LIMIT "+strconv.Itoa((page-1)*25)+", 25", gameName, categoryId, subCategoryId)
+	results, err := Conn.Query("SELECT r.position, a.user, pd.rank, a.badge, COALESCE(pgd.systemName, ''), COALESCE(pgd.medalCountBronze, 0), COALESCE(pgd.medalCountSilver, 0), COALESCE(pgd.medalCountGold, 0), COALESCE(pgd.medalCountPlatinum, 0), COALESCE(pgd.medalCountDiamond, 0), r.value"+valueType+", CASE WHEN r.actualPosition > 0 THEN r.actualPosition ELSE r.position END FROM rankingEntries r JOIN accounts a ON a.uuid = r.uuid JOIN players pd ON pd.uuid = a.uuid LEFT JOIN playerGameData pgd ON pgd.uuid = pd.uuid AND pgd.game = ? WHERE r.categoryId = ? AND r.subCategoryId = ? ORDER BY 12 LIMIT "+strconv.Itoa((page-1)*25)+", 25", gameName, categoryId, subCategoryId)
 	if err != nil {
 		return rankings, err
 	}
