@@ -337,7 +337,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string, gameId string
 	var placeholders []string
 	var entryValues []any
 
-	var rowIndex int
+	var batchRowIndex int
 	for results.Next() {
 		entry := &common.RankingEntry{}
 		if valueType == "Float" {
@@ -360,15 +360,25 @@ func UpdateRankingEntries(categoryId string, subCategoryId string, gameId string
 		}
 		entryValues = append(entryValues, entry.Timestamp)
 
-		rowIndex++
+		batchRowIndex++
+
+		if batchRowIndex == 1000 {
+			err = WriteRankingEntries(valueType, placeholders, entryValues)
+			if err != nil {
+				return err
+			}
+
+			batchRowIndex = 0
+			placeholders = placeholders[:0]
+			entryValues = entryValues[:0]
+		}
 	}
 
 	if len(entryValues) == 0 {
 		return nil
 	}
 
-	insertQuery := fmt.Sprintf("INSERT INTO rankingEntries (categoryId, subCategoryId, position, actualPosition, uuid, value"+valueType+", timestamp) VALUES %s", strings.Join(placeholders, ","))
-	_, err = Conn.Exec(insertQuery, entryValues...)
+	err = WriteRankingEntries(valueType, placeholders, entryValues)
 	if err != nil {
 		return err
 	}
@@ -379,6 +389,14 @@ func UpdateRankingEntries(categoryId string, subCategoryId string, gameId string
 	}
 
 	return nil
+}
+
+func WriteRankingEntries(valueType string, placeholders []string, entryValues []any) (err error) {
+	insertQuery := fmt.Sprintf("INSERT INTO rankingEntries (categoryId, subCategoryId, position, actualPosition, uuid, value"+valueType+", timestamp) VALUES %s", strings.Join(placeholders, ","))
+	_, err = Conn.Exec(insertQuery, entryValues...)
+	if err != nil {
+		return err
+	}
 }
 
 func UpdatePlayerMedals(gameName string) (err error) {
