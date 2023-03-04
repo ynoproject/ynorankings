@@ -397,6 +397,8 @@ func WriteRankingEntries(valueType string, placeholders []string, entryValues []
 	if err != nil {
 		return err
 	}
+
+	return nil
 }
 
 func UpdatePlayerMedals(gameName string) (err error) {
