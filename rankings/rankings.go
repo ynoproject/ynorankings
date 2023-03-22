@@ -35,7 +35,7 @@ func Init() {
 
 		eventPeriods, err := database.GetEventPeriodData(gameName)
 		if err != nil {
-			log.Print("SERVER", "exp", err.Error())
+			log.Print("SERVER ", "exp", err.Error())
 		} else if len(eventPeriods) > 0 {
 			expCategory := &common.RankingCategory{CategoryId: "exp", Periodic: true}
 			rankingCategories = append(rankingCategories, expCategory)
@@ -96,7 +96,7 @@ func Init() {
 		if gameName == "2kki" {
 			timeTrialMapIds, err := database.GetTimeTrialMapIds()
 			if err != nil {
-				log.Print("SERVER", "timeTrial", err.Error())
+				log.Print("SERVER ", "timeTrial", err.Error())
 			} else if len(timeTrialMapIds) > 0 {
 				timeTrialCategory := &common.RankingCategory{CategoryId: "timeTrial", Game: gameName}
 				rankingCategories = append(rankingCategories, timeTrialCategory)
@@ -109,7 +109,7 @@ func Init() {
 
 		gameMinigameIds, err := database.GetGameMinigameIds(gameName)
 		if err != nil {
-			log.Print("SERVER", "minigame", err.Error())
+			log.Print("SERVER ", "minigame", err.Error())
 		} else {
 			minigameCategory := &common.RankingCategory{CategoryId: "minigame", Game: gameName}
 			rankingCategories = append(rankingCategories, minigameCategory)
@@ -128,13 +128,13 @@ func Init() {
 			}
 			err := database.WriteRankingCategory(categoryId, category.Game, c)
 			if err != nil {
-				log.Print("SERVER", categoryId, err.Error())
+				log.Print("SERVER ", categoryId, err.Error())
 				continue
 			}
 			for sc, subCategory := range category.SubCategories {
 				err = database.WriteRankingSubCategory(categoryId, subCategory.SubCategoryId, subCategory.Game, sc)
 				if err != nil {
-					log.Print("SERVER", categoryId+"/"+subCategory.SubCategoryId, err.Error())
+					log.Print("SERVER ", categoryId+"/"+subCategory.SubCategoryId, err.Error())
 				}
 			}
 		}
@@ -163,14 +163,14 @@ func Init() {
 
 					err := database.UpdateRankingEntries(categoryId, subCategory.SubCategoryId, subCategory.Game)
 					if err != nil {
-						log.Print("SERVER", gameName+"/"+categoryId+"/"+subCategory.SubCategoryId, err.Error())
+						log.Print("SERVER ", gameName+"/"+categoryId+"/"+subCategory.SubCategoryId, err.Error())
 					}
 				}
 			}
 
 			err := database.UpdatePlayerMedals(gameName)
 			if err != nil {
-				log.Print("SERVER", "medals", err.Error())
+				log.Print("SERVER ", "medals", err.Error())
 			}
 		}
 	})
