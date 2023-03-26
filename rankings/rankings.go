@@ -142,7 +142,7 @@ func Init() {
 		common.GameRankingCategories[gameName] = rankingCategories
 	}
 
-	scheduler.Every(15).Minute().Do(func() {
+	scheduler.Every(1).Hour().Do(func() {
 		for _, gameName := range common.GameNames {
 			for _, category := range common.GameRankingCategories[gameName] {
 				categoryId := category.CategoryId
