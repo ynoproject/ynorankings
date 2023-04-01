@@ -288,7 +288,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string, gameId string
 		} else {
 			query += "1"
 		}
-		query += "?) FROM eventCompletions ec "
+		query += ") FROM eventCompletions ec "
 		if isFiltered {
 			if isEventLocationCount {
 				query += "JOIN eventLocations el"
