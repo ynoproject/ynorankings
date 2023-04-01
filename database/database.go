@@ -270,7 +270,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string, gameId string
 		}
 		query += " GROUP BY a.uuid"
 	case "exp":
-		query = "SELECT ?, ?, RANK() OVER (ORDER BY SUM(ec.exp) DESC), 0, ec.uuid, SUM(ec.exp), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid) FROM ((SELECT ec.uuid, ec.exp FROM eventCompletions ec JOIN eventLocations el ON el.id = ec.eventId AND ec.type = 0"
+		query = "SELECT ?, ?, RANK() OVER (ORDER BY SUM(ec.exp) DESC), 0, ec.uuid, SUM(ec.exp), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid AND aec.type <> 1) FROM ((SELECT ec.uuid, ec.exp FROM eventCompletions ec JOIN eventLocations el ON el.id = ec.eventId AND ec.type = 0"
 		if isFiltered {
 			query += " JOIN gameEventPeriods gep ON gep.id = el.gamePeriodId JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ?"
 		}
@@ -281,9 +281,16 @@ func UpdateRankingEntries(categoryId string, subCategoryId string, gameId string
 		}
 		query += ")) ec GROUP BY ec.uuid"
 	case "eventLocationCount", "freeEventLocationCount_" + gameId:
-		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(ec.uuid) DESC), 0, ec.uuid, COUNT(ec.uuid), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid) FROM eventCompletions ec "
+		isEventLocationCount := categoryId == "eventLocationCount"
+		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(ec.uuid) DESC), 0, ec.uuid, COUNT(ec.uuid), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid AND aec.type = "
+		if isEventLocationCount {
+			query += "0"
+		} else {
+			query += "1"
+		}
+		query += "?) FROM eventCompletions ec "
 		if isFiltered {
-			if categoryId == "eventLocationCount" {
+			if isEventLocationCount {
 				query += "JOIN eventLocations el"
 			} else {
 				query += "JOIN playerEventLocations el"
@@ -296,7 +303,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string, gameId string
 			query += "JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ? "
 		}
 		query += "WHERE ec.type = "
-		if categoryId == "eventLocationCount" {
+		if isEventLocationCount {
 			query += "0"
 		} else {
 			query += "1"
@@ -310,7 +317,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string, gameId string
 		}
 		query += " GROUP BY a.user"
 	case "eventVmCount":
-		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(ec.uuid) DESC), 0, ec.uuid, COUNT(ec.uuid), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid) FROM eventCompletions ec "
+		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(ec.uuid) DESC), 0, ec.uuid, COUNT(ec.uuid), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid AND aec.type = 2) FROM eventCompletions ec "
 		if isFiltered {
 			query += "JOIN eventVms ev ON ev.id = ec.eventId JOIN gameEventPeriods gep ON gep.id = ev.gamePeriodId JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ? "
 		}
