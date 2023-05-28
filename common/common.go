@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	GameNames                 = []string{"2kki", "amillusion", "braingirl", "deepdreams", "flow", "muma", "prayers", "someday", "unevendream", "yume"}
+	GameNames                 = []string{"2kki", "amillusion", "braingirl", "deepdreams", "flow", "muma", "prayers", "someday", "ultraviolet", "unevendream", "yume"}
 	GameRankingCategories     = make(map[string][]*RankingCategory)
 	CurrentEventPeriodOrdinal = -1
 )
