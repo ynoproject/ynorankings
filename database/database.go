@@ -317,7 +317,7 @@ func UpdateRankingEntries(categoryId string, subCategoryId string, gameId string
 		}
 		query += " WHERE gl.secret = 0 GROUP BY a.user"
 	case "eventVmCount":
-		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(ec.uuid) DESC), 0, ec.uuid, COUNT(ec.uuid), (SELECT MAX(aec.timestampCompleted) FROM eventCompletions aec WHERE aec.uuid = ec.uuid AND aec.type = 2) FROM eventCompletions ec "
+		query = "SELECT ?, ?, RANK() OVER (ORDER BY COUNT(ec.uuid) DESC), 0, ec.uuid, COUNT(ec.uuid), MAX(aec.timestampCompleted) FROM eventCompletions ec JOIN (SELECT aec.eventId, aec.uuid, aec.timestampCompleted FROM eventCompletions aec WHERE aec.type = 2) aec ON aec.uuid = ec.uuid AND aec.eventId = ec.eventId "
 		if isFiltered {
 			query += "JOIN eventVms ev ON ev.id = ec.eventId JOIN gameEventPeriods gep ON gep.id = ev.gamePeriodId JOIN eventPeriods ep ON ep.id = gep.periodId AND ep.periodOrdinal = ? "
 		}
