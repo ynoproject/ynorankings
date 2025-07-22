@@ -128,7 +128,7 @@ func GetRankingCategories(gameName string) (rankingCategories []*common.RankingC
 		rankingCategories = append(rankingCategories, rankingCategory)
 	}
 
-	results, err = Conn.Query("SELECT sc.categoryId, sc.subCategoryId, sc.game, CEILING(COUNT(r.uuid) / 25) FROM rankingSubCategories sc JOIN rankingEntries r ON r.categoryId = sc.categoryId AND r.subCategoryId = sc.subCategoryId WHERE sc.game IN ('', ?) GROUP BY sc.categoryId, sc.subCategoryId, sc.game ORDER BY 1, sc.ordinal", gameName)
+	results, err = Conn.Query("SELECT sc.categoryId, sc.subCategoryId, sc.game, CEILING(COUNT(r.uuid) / 25) FROM rankingSubCategories sc JOIN rankingEntries r ON r.categoryId = sc.categoryId AND r.subCategoryId = sc.subCategoryId WHERE sc.game IN ('', ?) AND sc.active GROUP BY sc.categoryId, sc.subCategoryId, sc.game ORDER BY 1, sc.ordinal", gameName)
 	if err != nil {
 		return rankingCategories, err
 	}
@@ -409,7 +409,7 @@ func WriteRankingEntries(valueType string, placeholders []string, entryValues []
 }
 
 func UpdatePlayerMedals(gameName string) (err error) {
-	_, err = Conn.Exec("UPDATE playerGameData pgd JOIN (SELECT uuid, SUM(CASE WHEN actualPosition <= 100 AND actualPosition > 30 THEN 1 ELSE 0 END) bronze, SUM(CASE WHEN actualPosition <= 30 AND actualPosition > 10 THEN 1 ELSE 0 END) silver, SUM(CASE WHEN actualPosition <= 10 AND actualPosition > 1 THEN 1 ELSE 0 END) gold, SUM(CASE WHEN actualPosition <= 3 AND actualPosition > 1 THEN 1 ELSE 0 END) plat, SUM(CASE WHEN actualPosition = 1 THEN 1 ELSE 0 END) diamond FROM rankingEntries e JOIN rankingCategories rc ON rc.categoryId = e.categoryId JOIN rankingSubCategories rsc ON rsc.categoryId = e.categoryId AND rsc.subCategoryId = e.subCategoryId AND rc.game IN ('', ?) AND rsc.game IN ('', ?) WHERE (rc.periodic = 0 OR e.subCategoryId IN ('all', ?)) GROUP BY uuid) m ON m.uuid = pgd.uuid SET pgd.medalCountBronze = m.bronze, pgd.medalCountSilver = m.silver, pgd.medalCountGold = m.gold, pgd.medalCountPlatinum = m.plat, pgd.medalCountDiamond = m.diamond WHERE pgd.game = ?", gameName, gameName, common.CurrentEventPeriodOrdinal, gameName)
+	_, err = Conn.Exec("UPDATE playerGameData pgd JOIN (SELECT uuid, SUM(CASE WHEN actualPosition <= 100 AND actualPosition > 30 THEN 1 ELSE 0 END) bronze, SUM(CASE WHEN actualPosition <= 30 AND actualPosition > 10 THEN 1 ELSE 0 END) silver, SUM(CASE WHEN actualPosition <= 10 AND actualPosition > 1 THEN 1 ELSE 0 END) gold, SUM(CASE WHEN actualPosition <= 3 AND actualPosition > 1 THEN 1 ELSE 0 END) plat, SUM(CASE WHEN actualPosition = 1 THEN 1 ELSE 0 END) diamond FROM rankingEntries e JOIN rankingCategories rc ON rc.categoryId = e.categoryId JOIN rankingSubCategories rsc ON rsc.categoryId = e.categoryId AND rsc.subCategoryId = e.subCategoryId AND rc.game IN ('', ?) AND rsc.game IN ('', ?) AND rsc.active WHERE (rc.periodic = 0 OR e.subCategoryId IN ('all', ?)) GROUP BY uuid) m ON m.uuid = pgd.uuid SET pgd.medalCountBronze = m.bronze, pgd.medalCountSilver = m.silver, pgd.medalCountGold = m.gold, pgd.medalCountPlatinum = m.plat, pgd.medalCountDiamond = m.diamond WHERE pgd.game = ?", gameName, gameName, common.CurrentEventPeriodOrdinal, gameName)
 	if err != nil {
 		return err
 	}
